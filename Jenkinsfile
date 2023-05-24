@@ -21,10 +21,5 @@ node {
     println SFDC_USERNAME
     def toolbelt = tool 'toolbelt'
     println toolbelt
-    stage('checkout source') {
-        // when running in multi-branch job, one must issue this command
-        checkout scm
-    }
-
-    
+       
 }
