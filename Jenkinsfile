@@ -4,7 +4,7 @@ node {
 
     def BUILD_NUMBER=env.BUILD_NUMBER
     def RUN_ARTIFACT_DIR="tests/${BUILD_NUMBER}"
-   
+    def SFDC_USERNAME
 
     def HUB_ORG=env.HUB_ORG_DH
     def SFDC_HOST = env.SFDC_HOST_DH
@@ -16,11 +16,8 @@ node {
     println HUB_ORG
     println SFDC_HOST
     println CONNECTED_APP_CONSUMER_KEY
-    println BUILD_NUMBER
-    println RUN_ARTIFACT_DIR
-   
     def toolbelt = tool 'toolbelt'
-    println toolbelt
+
     stage('checkout source') {
         // when running in multi-branch job, one must issue this command
         checkout scm
@@ -29,9 +26,9 @@ node {
     withCredentials([file(credentialsId: JWT_KEY_CRED_ID, variable: 'jwt_key_file')]) {
         stage('Deploye Code') {
             if (isUnix()) {
-                rc = sh returnStatus: true, script: "C:\Program Files\sfdx\bin\sfdx" force:auth:jwt:grant --clientid 3MVG9wt4IL4O5wvLNlZtiBcMUlAYt4GuNK7bisXDGGOfAuTwSuWNdpJzSivlMXl9HKLERGxntRjfcQxms90P9 --jwtkeyfile server.key --username rajukumarsfdevops@gmail.com --instanceurl https://login.salesforce.com --setdefaultdevhubusername
+                rc = sh returnStatus: true, script: "${toolbelt} force:auth:jwt:grant --clientid ${CONNECTED_APP_CONSUMER_KEY} --username ${HUB_ORG} --jwtkeyfile ${jwt_key_file} --setdefaultdevhubusername --instanceurl ${SFDC_HOST}"
             }else{
-                 rc = bat returnStatus: true, script: "C:\Program Files\sfdx\bin\sfdx" force:auth:jwt:grant --clientid 3MVG9wt4IL4O5wvLNlZtiBcMUlAYt4GuNK7bisXDGGOfAuTwSuWNdpJzSivlMXl9HKLERGxntRjfcQxms90P9 --jwtkeyfile server.key --username rajukumarsfdevops@gmail.com --instanceurl https://login.salesforce.com --setdefaultdevhubusername
+                 rc = bat returnStatus: true, script: "\"${toolbelt}\" force:auth:jwt:grant --clientid ${CONNECTED_APP_CONSUMER_KEY} --username ${HUB_ORG} --jwtkeyfile \"${jwt_key_file}\" --setdefaultdevhubusername --instanceurl ${SFDC_HOST}"
             }
             if (rc != 0) { error 'hub org authorization failed' }
 
@@ -39,9 +36,9 @@ node {
 			
 			// need to pull out assigned username
 			if (isUnix()) {
-				rmsg = sh returnStdout: true, script: "sfdx force:mdapi:deploy -d manifest/. -u ${HUB_ORG}"
+				rmsg = sh returnStdout: true, script: "${toolbelt} force:mdapi:deploy -d manifest/. -u ${HUB_ORG}"
 			}else{
-			   rmsg = bat returnStdout: true, script: "sfdx force:mdapi:deploy -d manifest/. -u ${HUB_ORG}"
+			   rmsg = bat returnStdout: true, script: "\"${toolbelt}\" force:mdapi:deploy -d manifest/. -u ${HUB_ORG}"
 			}
 			  
             printf rmsg
@@ -49,5 +46,4 @@ node {
             println(rmsg)
         }
     }
-    
 }
